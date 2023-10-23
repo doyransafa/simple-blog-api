@@ -1,22 +1,14 @@
 from rest_framework import generics
 from .models import Post, Comment, User
-from .serializers import PostSerializer, CommentSerializer, RegisterSerializer
-from rest_framework.permissions import SAFE_METHODS, BasePermission
+from .serializers import PostCreateSerializer, PostRetrieveSerializer, CommentCreateSerializer, CommentRetreiveSerializer, MyTokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-# Create your views here.
 
-class UserUpdatePermission(BasePermission):
-	message = 'You cannot Update or Delete a post that is not yours!'
+class MyTokenObtainPairView(TokenObtainPairView):
+	serializer_class = MyTokenObtainPairSerializer
 
-	def has_object_permission(self, request, view, obj):
-		
-		if request.method in SAFE_METHODS:
-			return True
-		
-		return obj.user == request.user
-
-class PostList(generics.ListCreateAPIView):
-	serializer_class = PostSerializer
+class PostList(generics.ListAPIView):
+	serializer_class = PostRetrieveSerializer
 
 	def get_queryset(self):
 
@@ -36,25 +28,36 @@ class PostList(generics.ListCreateAPIView):
 		return queryset
 	
 
-class PostDetail(generics.RetrieveUpdateDestroyAPIView, UserUpdatePermission):
-	permission_classes = [UserUpdatePermission]
+class PostDetail(generics.RetrieveDestroyAPIView):
+
 	queryset = Post.objects.all()
-	serializer_class = PostSerializer
+	serializer_class = PostRetrieveSerializer
+
+class PostCreateView(generics.CreateAPIView):
+
+	queryset = Post.objects.all()
+	serializer_class = PostCreateSerializer
+
+class PostUpdateView(generics.UpdateAPIView):
+
+	queryset = Post.objects.all()
+	serializer_class = PostCreateSerializer
 
 class CommentList(generics.ListCreateAPIView):
 
 	queryset = Comment.objects.all()
-	serializer_class = CommentSerializer
+	serializer_class = CommentRetreiveSerializer
 
 	def get_object(self, queryset=None, **kwargs):
 		post = self.kwargs.get('post_id')
 		return Comment.objects.filter(post=post)
 
 class CommentDetail(generics.RetrieveDestroyAPIView):
-	permission_classes = [UserUpdatePermission]
-	queryset = Comment.objects.all()
-	serializer_class = CommentSerializer
 
-class RegisterView(generics.CreateAPIView):
-	queryset = User.objects.all()
-	serializer_class = RegisterSerializer
+	queryset = Comment.objects.all()
+	serializer_class = CommentRetreiveSerializer
+
+class CommentCreateView(generics.CreateAPIView):
+	
+	queryset = Comment.objects.all()
+	serializer_class = CommentCreateSerializer

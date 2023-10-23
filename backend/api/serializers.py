@@ -2,13 +2,15 @@ from rest_framework import serializers
 from .models import Post, Comment, User
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class UserSerializer(serializers.ModelSerializer):
   class Meta:
     model = User
     fields = ('id', 'username')
 
-class PostSerializer(serializers.ModelSerializer):
+
+class PostRetrieveSerializer(serializers.ModelSerializer):
 
   user = UserSerializer()
 
@@ -16,26 +18,31 @@ class PostSerializer(serializers.ModelSerializer):
     model = Post
     fields = '__all__'
 
-  def create(self, validated_data):
-    validated_data['user'] = self.context['request'].user
-    return Post.objects.create(**validated_data)
+
+class PostCreateSerializer(serializers.ModelSerializer):
+
+  class Meta:
+    model = Post
+    fields = '__all__'
 
 
-class CommentSerializer(serializers.ModelSerializer):
+class CommentRetreiveSerializer(serializers.ModelSerializer):
 
   user = UserSerializer()
-  # post_id = serializers.PrimaryKeyRelatedField(queryset=Post.objects.all())
   
   class Meta:
     model = Comment
-    # exclude = ['post']
     fields = '__all__'
   
-  def create(self, validated_data):
-    validated_data['user'] = self.context['request'].user
-    return Post.objects.create(**validated_data)
+
+class CommentCreateSerializer(serializers.ModelSerializer):
+  
+  class Meta:
+    model = Comment
+    fields = '__all__'
 
 class RegisterSerializer(serializers.ModelSerializer):
+  
   email = serializers.EmailField(
     required=True,
     validators=[UniqueValidator(queryset=User.objects.all())]
@@ -64,3 +71,13 @@ class RegisterSerializer(serializers.ModelSerializer):
     user.save()
 
     return user
+  
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+	@classmethod
+	def get_token(cls, user):
+		token = super().get_token(user)
+
+		token['username'] = user.username
+
+		return token
